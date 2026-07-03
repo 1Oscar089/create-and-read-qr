@@ -1,0 +1,2 @@
+# create and read qr
+ 
