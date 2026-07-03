@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creador y Lector de QR</title>
+    
+    <!-- Cargamos la librería para CREAR QR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- Cargamos la librería para LEER QR -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <style>
+        /* Aquí pondremos nuestros estilos CSS más adelante */
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .seccion {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🛠️ Mi Aplicación de QR</h1>
+
+    <!-- Sección del Creador -->
+    <section class="seccion" id="creador">
+        <h2>1. Crear Código QR</h2>
+        
+        <label for="texto-qr">Escribe el texto, información o enlace:</label><br>
+        <textarea id="texto-qr" rows="3" cols="40" placeholder="Ejemplo: Nombre: Oscar, NIE: 123456"></textarea>
+        <br><br>
+        
+        <button id="btn-crear">Generar QR</button>
+        
+        <div id="contenedor-qr" style="margin-top: 20px;"></div>
+    </section>
+
+    <!-- Sección del Lector -->
+    <section class="seccion" id="lector">
+        <h2>2. Leer Código QR</h2>
+        <!-- Aquí iremos añadiendo el visor de la cámara -->
+    </section>
+
+    <!-- Aquí abajo, antes de cerrar el body, pondremos nuestro JavaScript -->
+    <script>
+        // 1. Obtenemos los elementos del HTML
+        const btnCrear = document.getElementById('btn-crear');
+        const textoQR = document.getElementById('texto-qr');
+        const contenedorQR = document.getElementById('contenedor-qr');
+
+        // 2. Función al hacer clic en el botón
+        btnCrear.addEventListener('click', () => {
+            // Guardamos el texto exactamente como lo escribe el usuario
+            const texto = textoQR.value;
+
+            // Comprobamos que no esté vacío
+            if (texto.trim() === '') {
+                alert('Por favor, escribe algo para generar el QR.');
+                return; 
+            }
+
+            // Limpiamos el contenedor por si ya había un QR generado antes
+            contenedorQR.innerHTML = '';
+
+            // 3. Generamos el QR
+            new QRCode(contenedorQR, {
+                text: texto,         
+                width: 200,          
+                height: 200,         
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H 
+            });
+        });
+    </script>
+</body>
+</html>
