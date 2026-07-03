@@ -17,12 +17,14 @@
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
         }
-        h1 { color: #333; text-align: center; }
+        h1 { color: #333; }
         .campo {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
             border-bottom: 1px solid #eee;
+            text-align: left;
         }
         .campo label {
             display: block;
@@ -31,16 +33,21 @@
             margin-bottom: 5px;
         }
         .campo .valor {
-            font-size: 18px;
+            font-size: 22px;
             font-weight: bold;
             color: #007bff;
+        }
+        #contador {
+            font-size: 14px;
+            color: #888;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
     <div class="tarjeta">
-        <h1>📋 Datos Recibidos</h1>
+        <h1>✅ Datos Recibidos</h1>
         
         <div class="campo">
             <label>Nombre:</label>
@@ -56,18 +63,19 @@
             <label>Fecha Actual (El Salvador):</label>
             <div id="dato-fecha" class="valor">Cargando...</div>
         </div>
+
+        <div id="contador">Volviendo al escáner en 3 segundos...</div>
     </div>
 
     <script>
-        // 1. Obtenemos los parámetros que vienen en la URL (después del "?")
+        // 1. Obtenemos los parámetros de la URL
         const parametros = new URLSearchParams(window.location.search);
 
-        // 2. Buscamos los valores exactos de los labels que usamos al crear el QR
-        // Si no los encuentra, ponemos "No proporcionado"
+        // 2. Buscamos los valores enviados desde el QR
         const nombre = parametros.get('Nombre') || 'No proporcionado';
         const nie = parametros.get('NIE') || 'No proporcionado';
 
-        // 3. Obtenemos la fecha actual configurada específicamente para El Salvador
+        // 3. Obtenemos la fecha de El Salvador
         const opcionesFecha = {
             timeZone: 'America/El_Salvador',
             year: 'numeric',
@@ -84,8 +92,11 @@
         document.getElementById('dato-nie').innerText = nie;
         document.getElementById('dato-fecha').innerText = fechaActual;
 
-        // 5. Mostramos la alerta de éxito
-        alert('✅ Datos guardados con éxito:\n\nNombre: ' + nombre + '\nNIE: ' + nie + '\nFecha: ' + fechaActual);
+        // 5. Temporizador de 3 segundos (3000 milisegundos)
+        setTimeout(() => {
+            // Redirigimos de vuelta al index.html
+            window.location.href = 'index.html';
+        }, 3000);
     </script>
 </body>
 </html>
