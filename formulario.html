@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recepción de Datos QR</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #f4f7f6;
+        }
+        .tarjeta {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; text-align: center; }
+        .campo {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .campo label {
+            display: block;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .campo .valor {
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tarjeta">
+        <h1>📋 Datos Recibidos</h1>
+        
+        <div class="campo">
+            <label>Nombre:</label>
+            <div id="dato-nombre" class="valor">Cargando...</div>
+        </div>
+
+        <div class="campo">
+            <label>NIE:</label>
+            <div id="dato-nie" class="valor">Cargando...</div>
+        </div>
+
+        <div class="campo">
+            <label>Fecha Actual (El Salvador):</label>
+            <div id="dato-fecha" class="valor">Cargando...</div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Obtenemos los parámetros que vienen en la URL (después del "?")
+        const parametros = new URLSearchParams(window.location.search);
+
+        // 2. Buscamos los valores exactos de los labels que usamos al crear el QR
+        // Si no los encuentra, ponemos "No proporcionado"
+        const nombre = parametros.get('Nombre') || 'No proporcionado';
+        const nie = parametros.get('NIE') || 'No proporcionado';
+
+        // 3. Obtenemos la fecha actual configurada específicamente para El Salvador
+        const opcionesFecha = {
+            timeZone: 'America/El_Salvador',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        const fechaActual = new Intl.DateTimeFormat('es-SV', opcionesFecha).format(new Date());
+
+        // 4. Inyectamos los datos en el HTML
+        document.getElementById('dato-nombre').innerText = nombre;
+        document.getElementById('dato-nie').innerText = nie;
+        document.getElementById('dato-fecha').innerText = fechaActual;
+
+        // 5. Mostramos la alerta de éxito
+        alert('✅ Datos guardados con éxito:\n\nNombre: ' + nombre + '\nNIE: ' + nie + '\nFecha: ' + fechaActual);
+    </script>
+</body>
+</html>
