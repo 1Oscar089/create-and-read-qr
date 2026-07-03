@@ -17,29 +17,33 @@
             padding: 20px;
             max-width: 800px;
             margin: 0 auto;
+            background-color: #f4f7f6;
         }
         .seccion {
             border: 1px solid #ccc;
             padding: 20px;
             margin-bottom: 20px;
             border-radius: 8px;
-            background-color: #f9f9f9;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         input, button {
             padding: 8px;
             margin-top: 5px;
+            box-sizing: border-box;
         }
         button {
             cursor: pointer;
             color: white;
             border: none;
             border-radius: 4px;
+            font-weight: bold;
         }
         .btn-azul { background-color: #007bff; }
         .btn-azul:hover { background-color: #0056b3; }
         .btn-verde { background-color: #28a745; }
         .btn-verde:hover { background-color: #218838; }
-        .btn-rojo { background-color: #dc3545; }
+        .btn-rojo { background-color: #dc3545; padding: 5px 10px; }
         
         .par-dato {
             margin-bottom: 10px;
@@ -53,27 +57,40 @@
         .par-dato input {
             margin-top: 0;
             flex: 1;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
         #lector-camara {
             width: 100%;
             max-width: 400px;
             margin-top: 10px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            overflow: hidden;
         }
     </style>
 </head>
 <body>
-    <a href="formulario.html">Ir a formulario</a>
+
     <h1>🛠️ Aplicación de QR Dinámico</h1>
+
+    <!-- SECCIÓN LECTOR (PUESTO ARRIBA PARA QUE ESTÉ SIEMPRE VISIBLE) -->
+    <section class="seccion" id="lector">
+        <h2>📷 Lector Automático</h2>
+        <p>La cámara está activa. Apunta a un QR para ir al enlace automáticamente.</p>
+        
+        <!-- Contenedor de la cámara siempre encendida -->
+        <div id="lector-camara"></div>
+    </section>
 
     <!-- SECCIÓN CREADOR -->
     <section class="seccion" id="creador">
         <h2>1. Crear Código QR</h2>
         
         <label>Enlace base (URL limpia):</label><br>
-        <input type="text" id="input-url" placeholder="Ej: formulario.html o https://midominio.com" style="width: 100%; max-width: 400px;"><br><br>
+        <input type="text" id="input-url" placeholder="Ej: formulario.html o https://midominio.com" style="width: 100%;"><br><br>
         
         <label>Datos a enviar:</label><br>
-        <!-- Aquí se inyectarán los campos dinámicos -->
         <div id="contenedor-campos"></div>
         
         <button id="btn-add-campo" class="btn-verde">+ Añadir campo</button>
@@ -84,20 +101,8 @@
         <div id="contenedor-qr" style="margin-top: 20px;"></div>
     </section>
 
-    <!-- SECCIÓN LECTOR -->
-    <section class="seccion" id="lector">
-        <h2>2. Leer Código QR</h2>
-        <p>Pulsa el botón Abrir Cámara.</p>
-        
-        <button id="btn-iniciar-lector" class="btn-azul">Iniciar Cámara</button>
-        <button id="btn-detener-lector" class="btn-rojo" style="display: none;">Detener Cámara</button>
-        
-        <div id="lector-camara" style="margin-top: 15px;"></div>
-        <div id="resultado-lector" style="margin-top: 15px; font-weight: bold; color: green;"></div>
-    </section>
-
     <script>
-                // ==========================================
+        // ==========================================
         // LÓGICA DEL CREADOR DINÁMICO
         // ==========================================
         const inputUrl = document.getElementById('input-url');
@@ -112,7 +117,7 @@
 
             const inputLabel = document.createElement('input');
             inputLabel.type = 'text';
-            inputLabel.placeholder = 'Label (ej: nombre)';
+            inputLabel.placeholder = 'Label (ej: Nombre)';
             inputLabel.className = 'input-label';
 
             const igual = document.createElement('span');
@@ -178,43 +183,39 @@
         });
 
         // ==========================================
-        // LÓGICA DEL LECTOR (REDIRECCIÓN INMEDIATA)
+        // LÓGICA DEL LECTOR (SIEMPRE ENCENDIDO)
         // ==========================================
-        const btnIniciar = document.getElementById('btn-iniciar-lector');
-        const btnDetener = document.getElementById('btn-detener-lector');
-        const divCamara = document.getElementById('lector-camara');
-
+        let escaneado = false; // Variable para evitar que redirija múltiples veces
         const html5QrCode = new Html5Qrcode("lector-camara");
 
-        btnIniciar.addEventListener('click', () => {
-            btnIniciar.style.display = 'none';
-            btnDetener.style.display = 'inline-block';
-
+        // Función para iniciar la cámara automáticamente
+        function iniciarCamara() {
             html5QrCode.start(
                 { facingMode: "environment" }, 
                 { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    // ¡EN CUANTO LEE EL QR!
-                    // Intentamos apagar la cámara rápidamente (sin esperar)
+                    // Si ya hemos leído uno, no hacemos nada para evitar dobles saltos
+                    if (escaneado) return;
+                    escaneado = true;
+                    
+                    // Intentamos detener la cámara para liberar el hardware
                     html5QrCode.stop().catch(() => {});
                     
-                    // Redirigimos INMEDIATAMENTE a la URL leída en la misma pestaña
+                    // Redirección inmediata en la misma pestaña
                     window.location.href = decodedText;
                 },
-                (errorMessage) => { /* Ignoramos errores de escaneo */ }
+                (errorMessage) => { 
+                    // Ignoramos los errores de "no se encontró QR" que salen constantemente
+                }
             ).catch((err) => {
-                alert("Error al acceder a la cámara.");
-                btnIniciar.style.display = 'inline-block';
-                btnDetener.style.display = 'none';
+                // Si el navegador bloquea la cámara (ej: no dimos permiso)
+                console.error("Error al iniciar la cámara: ", err);
+                document.getElementById('lector-camara').innerText = "Error: Debes dar permiso a la cámara en el navegador para que funcione el lector automático.";
             });
-        });
+        }
 
-        btnDetener.addEventListener('click', () => {
-            html5QrCode.stop().then(() => {
-                btnIniciar.style.display = 'inline-block';
-                btnDetener.style.display = 'none';
-            }).catch((err) => console.error(err));
-        });
+        // Iniciamos la cámara en cuanto la página carga por completo
+        window.addEventListener('load', iniciarCamara);
     </script>
 </body>
 </html>
