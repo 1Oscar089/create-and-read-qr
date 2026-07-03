@@ -97,7 +97,7 @@
     </section>
 
     <script>
-        // ==========================================
+                // ==========================================
         // LÓGICA DEL CREADOR DINÁMICO
         // ==========================================
         const inputUrl = document.getElementById('input-url');
@@ -106,7 +106,6 @@
         const btnCrear = document.getElementById('btn-crear');
         const contenedorQR = document.getElementById('contenedor-qr');
 
-        // Función para crear un nuevo par de inputs (Label y Dato)
         function crearCampoDinamico() {
             const divPar = document.createElement('div');
             divPar.className = 'par-dato';
@@ -128,7 +127,7 @@
             btnEliminar.innerText = 'X';
             btnEliminar.className = 'btn-rojo';
             btnEliminar.addEventListener('click', () => {
-                divPar.remove(); // Elimina este bloque al pulsar X
+                divPar.remove();
             });
 
             divPar.appendChild(inputLabel);
@@ -139,13 +138,10 @@
             contenedorCampos.appendChild(divPar);
         }
 
-        // Iniciamos con un campo vacío por defecto
         crearCampoDinamico();
 
-        // Evento para el botón "+"
         btnAddCampo.addEventListener('click', crearCampoDinamico);
 
-        // Evento para generar el QR
         btnCrear.addEventListener('click', () => {
             const urlBase = inputUrl.value.trim();
             if (urlBase === '') {
@@ -153,7 +149,6 @@
                 return;
             }
 
-            // Buscamos todos los bloques de campos que hemos creado
             const pares = document.querySelectorAll('.par-dato');
             const parametros = [];
 
@@ -161,23 +156,19 @@
                 const label = par.querySelector('.input-label').value.trim();
                 const valor = par.querySelector('.input-valor').value.trim();
                 
-                // Si el usuario escribió algo en el label, lo añadimos
                 if (label !== '') {
-                    // Codificamos el texto para URL
                     const paramStr = `${encodeURIComponent(label)}=${encodeURIComponent(valor)}`;
                     parametros.push(paramStr);
                 }
             });
 
-            // Construimos la URL final: enlace + ?param1=valor1&param2=valor2
             let urlFinal = urlBase;
             if (parametros.length > 0) {
                 urlFinal += '?' + parametros.join('&');
             }
 
-            contenedorQR.innerHTML = ''; // Limpiamos el QR anterior
+            contenedorQR.innerHTML = '';
 
-            // Generamos el QR
             new QRCode(contenedorQR, {
                 text: urlFinal,         
                 width: 200,          
@@ -187,35 +178,32 @@
         });
 
         // ==========================================
-        // LÓGICA DEL LECTOR
+        // LÓGICA DEL LECTOR (REDIRECCIÓN INMEDIATA)
         // ==========================================
         const btnIniciar = document.getElementById('btn-iniciar-lector');
         const btnDetener = document.getElementById('btn-detener-lector');
         const divCamara = document.getElementById('lector-camara');
-        const divResultado = document.getElementById('resultado-lector');
 
         const html5QrCode = new Html5Qrcode("lector-camara");
 
         btnIniciar.addEventListener('click', () => {
             btnIniciar.style.display = 'none';
             btnDetener.style.display = 'inline-block';
-            divResultado.innerText = '';
 
             html5QrCode.start(
                 { facingMode: "environment" }, 
                 { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    divResultado.innerText = 'QR Leído: ' + decodedText;
-                    html5QrCode.stop().then(() => {
-                        btnIniciar.style.display = 'inline-block';
-                        btnDetener.style.display = 'none';
-                        alert("¡Código leído! En el siguiente paso abriremos este enlace automáticamente.");
-                    }).catch((err) => console.error(err));
+                    // ¡EN CUANTO LEE EL QR!
+                    // Intentamos apagar la cámara rápidamente (sin esperar)
+                    html5QrCode.stop().catch(() => {});
+                    
+                    // Redirigimos INMEDIATAMENTE a la URL leída en la misma pestaña
+                    window.location.href = decodedText;
                 },
-                (errorMessage) => { /* Ignoramos errores de escaneo continuo */ }
+                (errorMessage) => { /* Ignoramos errores de escaneo */ }
             ).catch((err) => {
                 alert("Error al acceder a la cámara.");
-                console.error(err);
                 btnIniciar.style.display = 'inline-block';
                 btnDetener.style.display = 'none';
             });
