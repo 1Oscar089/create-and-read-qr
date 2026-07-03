@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creador y Lector de QR</title>
+    <title>Creador y Lector de QR Dinámico</title>
     
     <!-- Librería para CREAR QR -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -31,13 +31,28 @@
         }
         button {
             cursor: pointer;
-            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 4px;
         }
-        button:hover {
-            background-color: #0056b3;
+        .btn-azul { background-color: #007bff; }
+        .btn-azul:hover { background-color: #0056b3; }
+        .btn-verde { background-color: #28a745; }
+        .btn-verde:hover { background-color: #218838; }
+        .btn-rojo { background-color: #dc3545; }
+        
+        .par-dato {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .par-dato input {
+            margin-top: 0;
+            flex: 1;
         }
         #lector-camara {
             width: 100%;
@@ -48,20 +63,23 @@
 </head>
 <body>
 
-    <h1>🛠️ Aplicación de QR</h1>
+    <h1>🛠️ Aplicación de QR Dinámico</h1>
 
     <!-- SECCIÓN CREADOR -->
     <section class="seccion" id="creador">
-        <h2>1. Crear Código QR de Datos</h2>
-        <p>Rellena los datos y se generará un QR con un enlace.</p>
+        <h2>1. Crear Código QR</h2>
         
-        <label>Nombre:</label><br>
-        <input type="text" id="input-nombre" placeholder="Ej: Oscar Mejia"><br>
+        <label>Enlace base (URL limpia):</label><br>
+        <input type="text" id="input-url" placeholder="Ej: formulario.html o https://midominio.com" style="width: 100%; max-width: 400px;"><br><br>
         
-        <label>NIE / Documento:</label><br>
-        <input type="text" id="input-nie" placeholder="Ej: 123456"><br><br>
+        <label>Datos a enviar:</label><br>
+        <!-- Aquí se inyectarán los campos dinámicos -->
+        <div id="contenedor-campos"></div>
         
-        <button id="btn-crear">Generar QR</button>
+        <button id="btn-add-campo" class="btn-verde">+ Añadir campo</button>
+        <br><br>
+        
+        <button id="btn-crear" class="btn-azul">Generar QR</button>
         
         <div id="contenedor-qr" style="margin-top: 20px;"></div>
     </section>
@@ -71,8 +89,8 @@
         <h2>2. Leer Código QR</h2>
         <p>Pulsa el botón y apunta con la cámara al QR generado.</p>
         
-        <button id="btn-iniciar-lector">Iniciar Cámara</button>
-        <button id="btn-detener-lector" style="display: none; background-color: #dc3545;">Detener Cámara</button>
+        <button id="btn-iniciar-lector" class="btn-azul">Iniciar Cámara</button>
+        <button id="btn-detener-lector" class="btn-rojo" style="display: none;">Detener Cámara</button>
         
         <div id="lector-camara" style="margin-top: 15px;"></div>
         <div id="resultado-lector" style="margin-top: 15px; font-weight: bold; color: green;"></div>
@@ -80,38 +98,91 @@
 
     <script>
         // ==========================================
-        // LÓGICA DEL CREADOR
+        // LÓGICA DEL CREADOR DINÁMICO
         // ==========================================
+        const inputUrl = document.getElementById('input-url');
+        const contenedorCampos = document.getElementById('contenedor-campos');
+        const btnAddCampo = document.getElementById('btn-add-campo');
         const btnCrear = document.getElementById('btn-crear');
-        const inputNombre = document.getElementById('input-nombre');
-        const inputNie = document.getElementById('input-nie');
         const contenedorQR = document.getElementById('contenedor-qr');
 
-        btnCrear.addEventListener('click', () => {
-            const nombre = inputNombre.value.trim();
-            const nie = inputNie.value.trim();
+        // Función para crear un nuevo par de inputs (Label y Dato)
+        function crearCampoDinamico() {
+            const divPar = document.createElement('div');
+            divPar.className = 'par-dato';
 
-            if (nombre === '' || nie === '') {
-                alert('Por favor, rellena el Nombre y el NIE.');
+            const inputLabel = document.createElement('input');
+            inputLabel.type = 'text';
+            inputLabel.placeholder = 'Label (ej: nombre)';
+            inputLabel.className = 'input-label';
+
+            const igual = document.createElement('span');
+            igual.innerText = '=';
+
+            const inputValor = document.createElement('input');
+            inputValor.type = 'text';
+            inputValor.placeholder = 'Dato (ej: Oscar)';
+            inputValor.className = 'input-valor';
+
+            const btnEliminar = document.createElement('button');
+            btnEliminar.innerText = 'X';
+            btnEliminar.className = 'btn-rojo';
+            btnEliminar.addEventListener('click', () => {
+                divPar.remove(); // Elimina este bloque al pulsar X
+            });
+
+            divPar.appendChild(inputLabel);
+            divPar.appendChild(igual);
+            divPar.appendChild(inputValor);
+            divPar.appendChild(btnEliminar);
+
+            contenedorCampos.appendChild(divPar);
+        }
+
+        // Iniciamos con un campo vacío por defecto
+        crearCampoDinamico();
+
+        // Evento para el botón "+"
+        btnAddCampo.addEventListener('click', crearCampoDinamico);
+
+        // Evento para generar el QR
+        btnCrear.addEventListener('click', () => {
+            const urlBase = inputUrl.value.trim();
+            if (urlBase === '') {
+                alert('Por favor, escribe el enlace base limpio.');
                 return;
             }
 
-            // Codificamos los textos para que sean válidos en una URL (cambiamos espacios por %20, etc)
-            const nombreUrl = encodeURIComponent(nombre);
-            const nieUrl = encodeURIComponent(nie);
+            // Buscamos todos los bloques de campos que hemos creado
+            const pares = document.querySelectorAll('.par-dato');
+            const parametros = [];
 
-            // Creamos el enlace. Este enlace apunta a "formulario.html" y le pasa los datos
-            // Nota: como veremos en el siguiente paso, este archivo lo crearemos después
-            const urlDestino = `formulario.html?nombre=${nombreUrl}&nie=${nieUrl}`;
+            pares.forEach(par => {
+                const label = par.querySelector('.input-label').value.trim();
+                const valor = par.querySelector('.input-valor').value.trim();
+                
+                // Si el usuario escribió algo en el label, lo añadimos
+                if (label !== '') {
+                    // Codificamos el texto para URL
+                    const paramStr = `${encodeURIComponent(label)}=${encodeURIComponent(valor)}`;
+                    parametros.push(paramStr);
+                }
+            });
 
-            contenedorQR.innerHTML = ''; // Limpiamos el anterior
+            // Construimos la URL final: enlace + ?param1=valor1&param2=valor2
+            let urlFinal = urlBase;
+            if (parametros.length > 0) {
+                urlFinal += '?' + parametros.join('&');
+            }
 
-            // Generamos el QR. Usamos un nivel de corrección medio (M) para que no Overflow
+            contenedorQR.innerHTML = ''; // Limpiamos el QR anterior
+
+            // Generamos el QR
             new QRCode(contenedorQR, {
-                text: urlDestino,         
+                text: urlFinal,         
                 width: 200,          
                 height: 200,         
-                correctLevel: QRCode.CorrectLevel.M // Cambiamos a 'M' para evitar el error de longitud
+                correctLevel: QRCode.CorrectLevel.M 
             });
         });
 
@@ -123,7 +194,6 @@
         const divCamara = document.getElementById('lector-camara');
         const divResultado = document.getElementById('resultado-lector');
 
-        // Creamos la instancia del lector de html5-qrcode
         const html5QrCode = new Html5Qrcode("lector-camara");
 
         btnIniciar.addEventListener('click', () => {
@@ -131,33 +201,20 @@
             btnDetener.style.display = 'inline-block';
             divResultado.innerText = '';
 
-            // Iniciamos la cámara (usamos { facingMode: "environment" } para usar la cámara trasera en móviles)
             html5QrCode.start(
                 { facingMode: "environment" }, 
-                {
-                    fps: 10,    // Fotogramas por segundo
-                    qrbox: { width: 250, height: 250 } // Tamaño del cuadro de escaneo
-                },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    // ¡Éxito! Se leyó un QR
                     divResultado.innerText = 'QR Leído: ' + decodedText;
-                    
-                    // Paramos la cámara automáticamente tras leer
                     html5QrCode.stop().then(() => {
                         btnIniciar.style.display = 'inline-block';
                         btnDetener.style.display = 'none';
-                        
-                        // Aquí en el futuro redirigiremos a la URL leída
-                        alert("¡Código leído con éxito! En el siguiente paso abriremos este enlace.");
-                    }).catch((err) => {
-                        console.error("Error al detener la cámara", err);
-                    });
+                        alert("¡Código leído! En el siguiente paso abriremos este enlace automáticamente.");
+                    }).catch((err) => console.error(err));
                 },
-                (errorMessage) => {
-                    // Esto se ejecuta muchas veces por segundo si no encuentra un QR. Lo ignoramos.
-                }
+                (errorMessage) => { /* Ignoramos errores de escaneo continuo */ }
             ).catch((err) => {
-                alert("Error al acceder a la cámara. Asegúrate de dar permisos. Mira la consola para más detalles.");
+                alert("Error al acceder a la cámara.");
                 console.error(err);
                 btnIniciar.style.display = 'inline-block';
                 btnDetener.style.display = 'none';
@@ -168,9 +225,7 @@
             html5QrCode.stop().then(() => {
                 btnIniciar.style.display = 'inline-block';
                 btnDetener.style.display = 'none';
-            }).catch((err) => {
-                console.error(err);
-            });
+            }).catch((err) => console.error(err));
         });
     </script>
 </body>
